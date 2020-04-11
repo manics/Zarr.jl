@@ -115,6 +115,24 @@ end
   @test all(isapprox.(arr[1:2,1:2,2], [237.519 239.618; 237.536 239.667]))
 end
 
+@testset "Generic S3 Storage" begin
+  bucket = "zarr-demo"
+  store = "store/foo"
+  endpoint = "https://s3.eu-west-2.amazonaws.com"
+  region="ignored"
+  genericS3 = GenericS3(bucket, store, aws = aws_config(creds=nothing, endpoint=endpoint,region=region))
+  @test storagesize(genericS3) == 0
+  @test Zarr.zname(genericS3) == "foo"
+  @test Zarr.is_zgroup(genericS3) == true
+  genericS3group = zopen(genericS3)
+  @test Zarr.zname(genericS3group) == "foo"
+  genericS3Array = genericS3group.groups["bar"].arrays["baz"]
+  @test Zarr.zname(genericS3Array) == "baz"
+  @test eltype(genericS3Array) == Zarr.ASCIIChar
+  @test storagesize(genericS3Array) == 69
+  @test String(genericS3Array[:]) == "Hello from the cloud!"
+end
+
 @testset "HTTP Storage" begin
   s = Zarr.DictStore()
   g = zgroup(s, attrs = Dict("groupatt"=>5))
