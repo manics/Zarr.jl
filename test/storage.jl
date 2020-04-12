@@ -133,6 +133,21 @@ end
   @test String(genericS3Array[:]) == "Hello from the cloud!"
 end
 
+@testset "Generic S3 Minio Storage" begin
+  bucket = "idr"
+  store = "zarr/4007817.zarr"
+  endpoint = "https://minio-dev.openmicroscopy.org"
+  minio = GenericS3(bucket, store, aws = aws_config(creds=nothing, endpoint=endpoint))
+  @test storagesize(minio) == 1616151347
+  @test Zarr.zname(minio) == "4007817.zarr"
+  @test Zarr.is_zgroup(minio) == false
+  minioArray = zopen(minio)
+  @test Zarr.zname(minioArray) == "4007817.zarr"
+  @test eltype(minioArray) == Union{Missing, UInt16}
+  @test storagesize(minioArray) == 1616151347
+  @test size(minioArray) == (79, 1, 201, 333, 333)
+end
+
 @testset "HTTP Storage" begin
   s = Zarr.DictStore()
   g = zgroup(s, attrs = Dict("groupatt"=>5))
